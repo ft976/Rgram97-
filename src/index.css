@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --font-pixel: "Press Start 2P", system-ui, sans-serif;
+  --font-vt: "VT323", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer utilities {
+  .pixel-border {
+    border: 4px solid black;
+    box-shadow: 4px 4px 0px 0px #000000;
+  }
+  .pixel-border-sm {
+    border: 2px solid black;
+    box-shadow: 2px 2px 0px 0px #000000;
+  }
+  .pixel-text-shadow {
+    text-shadow: 2px 2px 0px #000000;
+  }
+  .pixel-grid {
+    background-image: 
+      linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+}
+
+body {
+  background-color: #f0f0f0;
+  color: #000;
+  font-family: var(--font-vt);
+  -webkit-font-smoothing: none;
+  line-height: 1.1;
+}
+
+input, button, p, span, h1, h2, h3 {
+  line-height: 1.2;
+}
+

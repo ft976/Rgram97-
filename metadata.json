@@ -1,0 +1,9 @@
+{
+  "name": "Rgram97",
+  "description": "A retro pixel-art themed real-time chat and feed room platform.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
