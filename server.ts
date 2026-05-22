@@ -82,6 +82,73 @@ function saveSessions() {
 async function startServer() {
   const app = express();
   const PORT = 3000;
+  
+  // Enable JSON body parsing EARLY
+  app.use(express.json());
+
+  // API endpoints to enforce unique username registration (DEFINED BEFORE EVERYTHING ELSE)
+  app.get("/api/check-username", (req, res) => {
+    try {
+      const name = (req.query.name as string || "").trim().toLowerCase();
+      const userId = (req.query.userId as string || "").trim();
+      
+      console.log(`[API] Checking username: "${name}" for UserId: ${userId}`);
+      
+      if (!name) {
+        return res.status(400).json({ available: false, reason: "Username name is required." });
+      }
+      
+      const ownerId = registeredUsernames[name];
+      if (ownerId && ownerId !== userId) {
+        return res.json({ available: false, reason: "Username already taken! Please choose another." });
+      }
+      
+      return res.json({ available: true });
+    } catch (err) {
+      console.error("[API ERROR] Error in check-username:", err);
+      return res.status(500).json({ available: false, reason: "Server internal error." });
+    }
+  });
+
+  app.post("/api/claim-username", (req, res) => {
+    try {
+      const { name, userId, avatarUrl, bio } = req.body;
+      const trimmedName = (name || "").trim();
+      const normalized = trimmedName.toLowerCase();
+      
+      console.log(`[API] Claiming username: "${trimmedName}" for UserId: ${userId}`);
+      
+      if (!trimmedName || !userId) {
+        return res.status(400).json({ success: false, reason: "Missing username or userId." });
+      }
+      
+      const ownerId = registeredUsernames[normalized];
+      if (ownerId && ownerId !== userId) {
+        return res.status(400).json({ success: false, reason: "Username already taken! Please choose another." });
+      }
+      
+      // Reserve it
+      registeredUsernames[normalized] = userId;
+      usersMetadata[userId] = { 
+          id: userId, 
+          name: trimmedName, 
+          avatarUrl: avatarUrl || "", 
+          bio: bio || "" 
+      };
+      saveSessions();
+      
+      return res.json({ success: true, name: trimmedName });
+    } catch (err) {
+      console.error("[API ERROR] Error in claim-username:", err);
+      return res.status(500).json({ success: false, reason: "Server internal error." });
+    }
+  });
+
+  // API routes
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok" });
+  });
+
   const httpServer = createServer(app);
   
   const io = new Server(httpServer, {
@@ -396,58 +463,6 @@ async function startServer() {
         io.emit("update_online_users", Object.values(onlineUsers));
       }
     });
-  });
-
-  // Enable JSON body parsing first
-  app.use(express.json());
-
-  // API endpoints to enforce unique username registration
-  app.get("/api/check-username", (req, res) => {
-    const name = (req.query.name as string || "").trim().toLowerCase();
-    const userId = (req.query.userId as string || "").trim();
-    
-    if (!name) {
-      return res.json({ available: false, reason: "Username name is required." });
-    }
-    
-    const ownerId = registeredUsernames[name];
-    if (ownerId && ownerId !== userId) {
-      return res.json({ available: false, reason: "Username already taken! Please choose another." });
-    }
-    
-    return res.json({ available: true });
-  });
-
-  app.post("/api/claim-username", (req, res) => {
-    const { name, userId, avatarUrl, bio } = req.body;
-    const trimmedName = (name || "").trim();
-    const normalized = trimmedName.toLowerCase();
-    
-    if (!trimmedName || !userId) {
-      return res.json({ success: false, reason: "Missing username or userId." });
-    }
-    
-    const ownerId = registeredUsernames[normalized];
-    if (ownerId && ownerId !== userId) {
-      return res.json({ success: false, reason: "Username already taken! Please choose another." });
-    }
-    
-    // Reserve it
-    registeredUsernames[normalized] = userId;
-    usersMetadata[userId] = { 
-        id: userId, 
-        name: trimmedName, 
-        avatarUrl: avatarUrl || "", 
-        bio: bio || "" 
-    };
-    saveSessions();
-    
-    return res.json({ success: true, name: trimmedName });
-  });
-
-  // API routes FIRST
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
   });
 
   // Vite middleware for development

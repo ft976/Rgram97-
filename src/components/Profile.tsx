@@ -93,44 +93,24 @@ export function Profile({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
     setErrorMsg("");
     setIsSubmitting(true);
 
     try {
-      const checkRes = await fetch(`/api/check-username?name=${encodeURIComponent(name.trim())}&userId=${encodeURIComponent(userId)}`);
-      const checkData = await checkRes.json();
-      
-      if (!checkData.available) {
-        setErrorMsg(checkData.reason || "Username is already registered by another user!");
-        setIsSubmitting(false);
-        return;
-      }
-
       const finalAvatar = avatarUrl.trim() || getRandomAvatar();
 
-      const claimRes = await fetch("/api/claim-username", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), userId, avatarUrl: finalAvatar, bio: bio.trim() })
-      });
-      const claimData = await claimRes.json();
-
-      if (!claimData.success) {
-        setErrorMsg(claimData.reason || "Could not register username. Try another name.");
-        setIsSubmitting(false);
-        return;
-      }
-
+      // Backend calls removed for better deployment compatibility (e.g. Vercel)
+      // Any username is now allowed without server-side uniqueness check
+      
       onSave({
         id: userId,
-        name: name.trim(),
+        name: name.trim() || "Anonymous",
         bio: bio.trim(),
         avatarUrl: finalAvatar,
       });
     } catch (err) {
       console.error("Error saving profile:", err);
-      setErrorMsg("Connection failure! Please try again.");
+      setErrorMsg(`Save failure! (${err instanceof Error ? err.message : "Local Storage Error"}). Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
@@ -202,7 +182,7 @@ export function Profile({
             )}
 
             <div className="flex flex-col gap-1">
-              <label className="font-pixel text-[10px] text-sky-500">USERNAME</label>
+              <label className="font-pixel text-[10px] text-sky-500">USERNAME (OPTIONAL)</label>
               <input
                 type="text"
                 value={name}
@@ -210,7 +190,6 @@ export function Profile({
                 className="p-3 text-xl outline-none bg-sky-50 pixel-border-sm focus:bg-white transition-colors animate-none"
                 placeholder="e.g. PixelHero"
                 maxLength={15}
-                required
               />
             </div>
 
@@ -228,7 +207,7 @@ export function Profile({
 
             <button
               type="submit"
-              disabled={!name.trim() || isSubmitting}
+              disabled={isSubmitting}
               className="mt-6 bg-pink-500 text-white font-pixel text-sm p-4 pixel-border hover:bg-pink-400 disabled:opacity-50 disabled:hover:bg-pink-500 cursor-pointer transition-all active:translate-y-1 active:shadow-none"
             >
               {isSubmitting ? "SAVING..." : "SAVE PROFILE"}
