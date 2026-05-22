@@ -72,6 +72,21 @@ export default function App() {
     localStorage.setItem("pixel_rooms", JSON.stringify(newRooms));
   };
 
+  const handleSyncRooms = (serverRooms: RoomInfo[]) => {
+      const merged = [...myRooms];
+      let changed = false;
+      serverRooms.forEach(sRoom => {
+          if (!merged.find(m => m.id === sRoom.id)) {
+              merged.push(sRoom);
+              changed = true;
+          }
+      });
+      if (changed) {
+          setMyRooms(merged);
+          localStorage.setItem("pixel_rooms", JSON.stringify(merged));
+      }
+  };
+
   if (currentScreen === "loading") {
     return <div className="min-h-screen bg-sky-200" />;
   }
@@ -87,6 +102,7 @@ export default function App() {
         myRooms={myRooms}
         onJoinRoom={handleJoinRoom}
         onDeleteRoom={handleDeleteRoom}
+        onSyncRooms={handleSyncRooms}
         onEditProfile={() => setCurrentScreen("profile")}
       />
     );

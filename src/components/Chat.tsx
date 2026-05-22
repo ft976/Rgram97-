@@ -590,10 +590,10 @@ export function Chat({
               const isSecurity = msg.userId === "system_alert" || msg.text.includes("SHIELD") || msg.text.includes("SECURITY") || msg.text.includes("ALERT") || msg.text.includes("WARNING");
               return (
                 <div key={msg.id} className="w-full flex justify-center my-1.5 select-none select-none">
-                  <div className={`pixel-border-sm p-1.5 px-2.5 flex items-center justify-center gap-1.5 max-w-[95%] text-center font-pixel text-[8px] sm:text-[9px] leading-tight shadow-md border-2 border-black rounded-xs ${
+                  <div className={`pixel-border-gap m-1 p-1.5 px-2.5 flex items-center justify-center gap-1.5 max-w-[95%] text-center font-pixel text-[8px] sm:text-[9px] leading-tight shadow-md border border-black rounded-xs ${
                     isSecurity 
-                      ? "bg-red-950 text-red-200 shadow-[1px_1px_0_0_#991b1b]" 
-                      : "bg-sky-950 text-yellow-300 shadow-[1px_1px_0_0_#0ea5e9]"
+                      ? "bg-red-950 text-red-200" 
+                      : "bg-sky-950 text-yellow-300"
                   }`}>
                     <span>{isSecurity ? "🔏" : "👾"}</span>
                     <span className="uppercase tracking-tighter">{msg.text}</span>
@@ -770,7 +770,7 @@ export function Chat({
                           e.stopPropagation();
                           setSelectedMsgId(selectedMsgId === msg.id ? null : msg.id);
                         }}
-                        className={msg.audioUrl && !msg.isDeleted ? "cursor-pointer" : `cursor-pointer pixel-border-sm p-2 px-3 text-[16px] sm:text-[18px] break-words relative flex flex-col ${
+                        className={msg.audioUrl && !msg.isDeleted ? "cursor-pointer" : `cursor-pointer pixel-border-gap m-1 p-1.5 px-3 text-[22px] sm:text-[26px] break-words relative flex flex-col w-fit ${
                           isMe ? "bg-pink-500 text-white" : "bg-white text-black"
                         } ${highlightedMsgId === msg.id ? "ring-4 ring-yellow-400 !bg-yellow-200 !text-black scale-105 transition-all duration-300" : ""}`}
                       >
@@ -852,15 +852,15 @@ export function Chat({
                             ) : (
                               <>
                                 {msg.imageUrl && (
-                                  <div className="flex flex-col max-w-[200px] sm:max-w-xs mb-1">
-                                    <div className="bg-sky-700 text-white border-2 border-black p-1 px-1.5 flex items-center justify-between font-pixel text-[8px] select-none rounded-t-sm shadow-[1px_1px_0_0_#000]">
+                                  <div className="flex flex-col max-w-[280px] sm:max-w-sm mb-1 w-fit">
+                                    <div className="bg-sky-700 text-white border border-black p-1 px-1.5 flex items-center justify-between font-pixel text-[8px] select-none rounded-t-sm">
                                       <span>📷 RETRO PHOTO</span>
                                       <span className="text-sky-300">SHUTTER_X</span>
                                     </div>
                                     <img
                                       src={msg.imageUrl}
                                       alt="Shared"
-                                      className="w-full max-h-40 pixel-border-sm bg-sky-50 object-cover cursor-zoom-in hover:opacity-90 transition-opacity"
+                                      className="w-full max-h-64 pixel-border-gap m-0.5 bg-sky-50 object-cover cursor-zoom-in hover:opacity-90 transition-opacity"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setViewerMedia({
@@ -877,8 +877,8 @@ export function Chat({
                                   </div>
                                 )}
                                 {msg.videoUrl && (
-                                  <div className="flex flex-col max-w-[200px] sm:max-w-xs mb-1">
-                                    <div className="bg-purple-800 text-white border-2 border-black p-1 px-1.5 flex items-center justify-between font-pixel text-[8px] select-none rounded-t-sm shadow-[1px_1px_0_0_#000]">
+                                  <div className="flex flex-col max-w-[280px] sm:max-w-sm mb-1 w-fit">
+                                    <div className="bg-purple-800 text-white border border-black p-1 px-1.5 flex items-center justify-between font-pixel text-[8px] select-none rounded-t-sm">
                                       <span>🎥 RETRO VIDEO</span>
                                       <span className="text-yellow-400">PLAY_CAM</span>
                                     </div>
@@ -887,7 +887,7 @@ export function Chat({
                                         src={msg.videoUrl}
                                         playsInline
                                         muted
-                                        className="w-full max-h-40 pixel-border-sm bg-black object-contain text-[8px]"
+                                        className="w-full max-h-64 pixel-border-gap m-0.5 bg-black object-contain text-[8px]"
                                       />
                                       <div 
                                         onClick={(e) => {
@@ -920,7 +920,7 @@ export function Chat({
           })
         )}
         {Object.entries(typingUsers).filter(([userId]) => userId !== currentUser.id).length > 0 && (
-          <div className="flex items-center gap-2 p-2 px-3 bg-yellow-50 text-black border-2 border-black font-pixel text-[8px] sm:text-[9px] w-fit rounded-xs shadow-[1.5px_1.5px_0_0_#000] my-1 ml-1 select-none self-start transition-all shrink-0 animate-pulse">
+          <div className="flex items-center gap-2 p-2 px-3 bg-yellow-50 text-black border border-black font-pixel text-[8px] sm:text-[9px] w-fit rounded-xs my-1 ml-1 select-none self-start transition-all shrink-0 animate-pulse">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-bounce shrink-0" />
             <span className="font-bold tracking-tight uppercase">
               {Object.entries(typingUsers)
@@ -1120,10 +1120,10 @@ export function Chat({
         className="hidden"
       />
 
-      <div className="bg-sky-200 border-t-4 border-black p-2 absolute bottom-0 left-0 right-0 z-20">
+      <div className="bg-sky-200 border-t-4 border-black p-4 absolute bottom-0 left-0 right-0 z-20">
         {/* Reply Quoting Banner */}
         {replyTo && (
-          <div className="mb-1 bg-pink-100 p-1.5 px-2 border-2 border-black flex justify-between items-center text-[9px] sm:text-[10px] text-black">
+          <div className="mb-1 bg-pink-100 p-1.5 px-2 border border-black flex justify-between items-center text-[9px] sm:text-[10px] text-black">
             <div className="flex flex-col text-left gap-0.5">
               <span className="font-pixel text-[7px] text-sky-600 tracking-wider">↩️ REPLYING TO @{replyTo.userName}</span>
               <span className="font-pixel text-[8px] text-gray-500 truncate max-w-[190px]">
@@ -1267,12 +1267,12 @@ export function Chat({
                 setShowAttachMenu(false);
                 setShowImageInput(false);
               }}
-              className={`p-1.5 bg-white pixel-border-sm hover:bg-sky-50 transition-colors shrink-0 ${
+              className={`p-2.5 bg-white pixel-border-sm hover:bg-sky-50 transition-colors shrink-0 ${
                 showStickers ? "bg-pink-300" : ""
               }`}
               title="Send Sticker"
             >
-              <Smile size={16} className="stroke-[2.5px] text-pink-500" />
+              <Smile size={20} className="stroke-[2.5px] text-pink-500" />
             </button>
             <button
               type="button"
@@ -1281,21 +1281,21 @@ export function Chat({
                 setShowStickers(false);
                 setShowImageInput(false);
               }}
-              className={`p-1.5 bg-white pixel-border-sm hover:bg-sky-50 transition-colors shrink-0 ${
+              className={`p-2.5 bg-white pixel-border-sm hover:bg-sky-50 transition-colors shrink-0 ${
                 showAttachMenu ? "bg-sky-300" : ""
               }`}
               title="Attach File / Live Camera"
             >
-              <Paperclip size={16} className="stroke-[2.5px] text-sky-500" />
+              <Paperclip size={20} className="stroke-[2.5px] text-sky-500" />
             </button>
             
             <button
               type="button"
               onClick={startRecording}
-              className="p-1.5 bg-white pixel-border-sm hover:bg-red-50 text-red-500 transition-colors shrink-0"
+              className="p-2.5 bg-white pixel-border-sm hover:bg-red-50 text-red-500 transition-colors shrink-0"
               title="Record Voice Note"
             >
-              <Mic size={16} className="stroke-[2.5px]" />
+              <Mic size={20} className="stroke-[2.5px]" />
             </button>
 
             <input
@@ -1303,14 +1303,14 @@ export function Chat({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Type message..."
-              className="flex-1 p-1 bg-white pixel-border-sm focus:bg-sky-50 transition-colors text-sm min-w-0"
+              className="flex-1 p-2 bg-white pixel-border-sm focus:bg-sky-50 transition-colors text-lg min-w-0"
             />
             <button
               type="submit"
               disabled={!text.trim()}
-              className="p-1.5 bg-pink-500 text-white pixel-border-sm hover:bg-pink-400 disabled:opacity-50 shrink-0 transition-all cursor-pointer"
+              className="p-2.5 bg-pink-500 text-white pixel-border-sm hover:bg-pink-400 disabled:opacity-50 shrink-0 transition-all cursor-pointer"
             >
-              <Send size={16} className="stroke-[2.5px]" />
+              <Send size={20} className="stroke-[2.5px]" />
             </button>
           </form>
         )}

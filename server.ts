@@ -42,24 +42,25 @@ let onlineUsers: Record<string, { id: string; name: string; avatarUrl: string }>
 let friendships: Record<string, string[]> = {};
 // Track pending friend requests: receiverId -> array of senderIds
 let friendRequests: Record<string, string[]> = {};
+// Track user rooms: userId -> array of roomIds
+let userRooms: Record<string, string[]> = {};
 
 // Load sessions from disk on startup
 try {
   if (fs.existsSync(DB_FILE)) {
     const data = fs.readFileSync(DB_FILE, "utf-8");
     const parsed = JSON.parse(data);
+    
+    // Support both old and new formats
     if (parsed.sessions) {
       sessions = parsed.sessions;
       registeredUsernames = parsed.registeredUsernames || {};
       usersMetadata = parsed.usersMetadata || {};
       friendships = parsed.friendships || {};
       friendRequests = parsed.friendRequests || {};
+      userRooms = parsed.userRooms || {};
     } else {
       sessions = parsed;
-      registeredUsernames = {};
-      usersMetadata = {};
-      friendships = {};
-      friendRequests = {};
     }
     // On startup, we reset active users inside rooms as they will reconnect when they reload
     for (const roomId in sessions) {
@@ -72,7 +73,7 @@ try {
 
 function saveSessions() {
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify({ sessions, registeredUsernames, usersMetadata, friendships, friendRequests }, null, 2), "utf-8");
+    fs.writeFileSync(DB_FILE, JSON.stringify({ sessions, registeredUsernames, usersMetadata, friendships, friendRequests, userRooms }, null, 2), "utf-8");
   } catch (e) {
     console.error("Error writing db file:", e);
   }
@@ -94,10 +95,16 @@ async function startServer() {
     socket.on("join_room", ({ roomId, user }) => {
       socket.join(roomId);
       
+      // Persist the fact that this user is in this room
+      if (!userRooms[user.id]) userRooms[user.id] = [];
+      if (!userRooms[user.id].includes(roomId)) {
+        userRooms[user.id].push(roomId);
+      }
+      
       if (!sessions[roomId]) {
         sessions[roomId] = { users: [], messages: [] };
-        saveSessions();
       }
+      saveSessions();
       
       const existingUser = sessions[roomId].users.find((u) => u.id === user.id);
       if (!existingUser) {
@@ -304,10 +311,23 @@ async function startServer() {
         pendingRequests: (friendRequests[user.id] || []).map(senderId => ({
             senderId,
             senderUser: usersMetadata[senderId]
-        })).filter(r => r.senderUser)
+        })).filter(r => r.senderUser),
+        myRooms: (userRooms[user.id] || []).map(rId => ({ id: rId, name: rId }))
       });
       
       io.emit("update_online_users", Object.values(onlineUsers));
+    });
+
+    socket.on("search_users", (query: string) => {
+      const q = query.toLowerCase().trim();
+      if (!q) {
+        socket.emit("search_results", []);
+        return;
+      }
+      const results = Object.values(usersMetadata).filter(u => 
+        u.name.toLowerCase().includes(q)
+      ).slice(0, 20); // Limit results
+      socket.emit("search_results", results);
     });
 
     socket.on("get_user_profile", (targetId) => {

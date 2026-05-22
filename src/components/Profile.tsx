@@ -26,6 +26,7 @@ export function Profile({
   const [onlineUsers, setOnlineUsers] = useState<User[]>([]);
   const [friendRequests, setFriendRequests] = useState<Array<{senderId: string, senderUser: User}>>([]);
   const [searchUser, setSearchUser] = useState("");
+  const [searchResults, setSearchResults] = useState<User[]>([]);
 
   useEffect(() => {
     if (!initialUser) return;
@@ -40,6 +41,10 @@ export function Profile({
       setOnlineUsers(data.onlineUsers.filter(u => u.id !== initialUser.id));
       setFriends(data.friends);
       setFriendRequests(data.pendingRequests);
+    });
+
+    newSocket.on("search_results", (results: User[]) => {
+      setSearchResults(results.filter(u => u.id !== initialUser.id));
     });
 
     newSocket.on("update_online_users", (users) => {
@@ -70,7 +75,16 @@ export function Profile({
     };
   }, [initialUser]);
 
-  const filteredUsers = onlineUsers.filter(u => u.name.toLowerCase().includes(searchUser.toLowerCase()));
+  useEffect(() => {
+    if (socket && searchUser.trim()) {
+        const timeout = setTimeout(() => {
+            socket.emit("search_users", searchUser);
+        }, 300);
+        return () => clearTimeout(timeout);
+    } else {
+        setSearchResults([]);
+    }
+  }, [searchUser, socket]);
 
   const handleAddFriend = (targetUserId: string) => {
     if (!socket || !initialUser) return;
@@ -252,21 +266,31 @@ export function Profile({
             </div>
             
             <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
-              <h3 className="font-pixel text-sky-600 text-[9px] uppercase tracking-tighter">Nearby Online Users</h3>
-              {filteredUsers.length === 0 && <p className="font-pixel text-[8px] text-gray-400">No matching connections online.</p>}
-              {filteredUsers.map((user) => (
+              <h3 className="font-pixel text-sky-600 text-[9px] uppercase tracking-tighter">Search Results</h3>
+              {searchUser.trim() && searchResults.length === 0 && <p className="font-pixel text-[8px] text-gray-400">No matching users found.</p>}
+              {!searchUser.trim() && onlineUsers.length > 0 && <p className="font-pixel text-[8px] text-sky-400 italic">Try searching for any username!</p>}
+              {searchResults.map((user) => (
                 <div key={user.id} className="flex items-center justify-between p-2 bg-sky-50 pixel-border-sm hover:bg-white transition-colors">
                   <div className="flex items-center gap-2">
                     <img src={user.avatarUrl} className="w-6 h-6 pixel-border-sm bg-white" />
-                    <span className="font-pixel text-[10px] text-zinc-700">{user.name}</span>
+                    <div className="flex flex-col">
+                        <span className="font-pixel text-[10px] text-zinc-700">{user.name}</span>
+                        {onlineUsers.find(o => o.id === user.id) && <span className="font-pixel text-[6px] text-green-500 uppercase">Online</span>}
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleAddFriend(user.id)}
-                    className="bg-white p-1 pixel-border-sm hover:bg-green-100 text-green-500 transition-all active:scale-95"
-                    title="Send Friend Request"
-                  >
-                    <UserPlus size={14} />
-                  </button>
+                  {friends.find(f => f.id === user.id) ? (
+                      <div className="bg-green-100 p-1 pixel-border-sm text-green-600">
+                          <Check size={14} />
+                      </div>
+                  ) : (
+                    <button
+                        onClick={() => handleAddFriend(user.id)}
+                        className="bg-white p-1 pixel-border-sm hover:bg-green-100 text-green-500 transition-all active:scale-95"
+                        title="Send Friend Request"
+                    >
+                        <UserPlus size={14} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

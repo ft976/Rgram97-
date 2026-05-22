@@ -8,12 +8,14 @@ export function Home({
   myRooms,
   onJoinRoom,
   onDeleteRoom,
+  onSyncRooms,
   onEditProfile,
 }: {
   currentUser: User;
   myRooms: RoomInfo[];
   onJoinRoom: (roomId: string) => void;
   onDeleteRoom: (roomId: string) => void;
+  onSyncRooms?: (rooms: RoomInfo[]) => void;
   onEditProfile: () => void;
 }) {
   const [roomCode, setRoomCode] = useState("");
@@ -37,10 +39,15 @@ export function Home({
       newSocket.emit("join_lobby", { user: currentUser });
     });
 
-    newSocket.on("lobby_init", (data: { onlineUsers: User[], friends: User[], pendingRequests: Array<{senderId: string, senderUser: User}> }) => {
+    newSocket.on("lobby_init", (data: { onlineUsers: User[], friends: User[], pendingRequests: Array<{senderId: string, senderUser: User}>, myRooms: RoomInfo[] }) => {
       setOnlineUsers(data.onlineUsers.filter(u => u.id !== currentUser.id));
       setFriends(data.friends);
       setFriendRequests(data.pendingRequests);
+      
+      // Sync rooms from server
+      if (data.myRooms && onSyncRooms) {
+          onSyncRooms(data.myRooms);
+      }
     });
 
     newSocket.on("update_online_users", (users) => {
@@ -134,7 +141,7 @@ export function Home({
           </button>
           <button 
             onClick={() => setCurrentView("inbox")}
-            className={`flex-1 py-3 font-pixel text-xs pixel-border transition-all uppercase flex items-center justify-center gap-2 ${currentView === "inbox" ? "bg-purple-500 text-white shadow-[4px_4px_0_0_#7e22ce]" : "bg-white text-purple-600 hover:bg-purple-50"}`}
+            className={`flex-1 py-3 font-pixel text-xs pixel-border transition-all uppercase flex items-center justify-center gap-2 ${currentView === "inbox" ? "bg-amber-600 text-white shadow-[4px_4px_0_0_#92400e]" : "bg-white text-amber-600 hover:bg-amber-50"}`}
           >
             <span className="text-sm">📥</span> INBOX
           </button>
@@ -207,13 +214,13 @@ export function Home({
         ) : (
           <div className="flex flex-col gap-4">
             {/* Inbox Section */}
-            <div className="bg-white p-6 pixel-border flex flex-col gap-4 shadow-[4px_4px_0_0_#9333ea]">
+            <div className="bg-white p-6 pixel-border flex flex-col gap-4 shadow-[4px_4px_0_0_#b45309]">
               <div className="flex justify-between items-center">
-                <h2 className="font-pixel text-purple-600 uppercase tracking-widest">Pixel Inbox</h2>
+                <h2 className="font-pixel text-amber-700 uppercase tracking-widest">Pixel Inbox</h2>
               </div>
               
-              <div className="bg-purple-50 p-3 pixel-border-sm mb-2">
-                <p className="font-pixel text-[8px] text-purple-600 uppercase mb-2">DIRECT CONVERSATIONS</p>
+              <div className="bg-amber-50 p-3 pixel-border-sm mb-2">
+                <p className="font-pixel text-[8px] text-amber-700 uppercase mb-2">DIRECT CONVERSATIONS</p>
                 {myRooms.filter(r => r.id.startsWith("DM-")).length === 0 ? (
                     <p className="font-pixel text-[8px] text-gray-400 italic">No active direct chats. Start one below!</p>
                 ) : (
@@ -242,17 +249,17 @@ export function Home({
               </div>
 
               <div className="flex justify-between items-center mt-2">
-                <h2 className="font-pixel text-purple-600 text-xs">YOUR FRIENDS ({friends.length})</h2>
+                <h2 className="font-pixel text-amber-700 text-xs">YOUR FRIENDS ({friends.length})</h2>
               </div>
               
               {friends.length === 0 ? (
-                <div className="text-center p-6 border-4 border-dashed border-purple-200 text-purple-400">
+                <div className="text-center p-6 border-4 border-dashed border-amber-200 text-amber-400">
                   <p className="font-pixel text-[10px]">ADD FRIENDS FROM YOUR PROFILE NETWORK OPTION</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 max-h-80 overflow-y-auto pr-2">
                   {friends.map((friend) => (
-                    <div key={friend.id} className="flex items-center justify-between p-2.5 bg-purple-50 pixel-border-sm group hover:bg-white transition-colors">
+                    <div key={friend.id} className="flex items-center justify-between p-2.5 bg-amber-50 pixel-border-sm group hover:bg-white transition-colors">
                       <div 
                         className="flex items-center gap-3 cursor-pointer"
                         onClick={() => setSelectedFriend(friend)}
@@ -264,13 +271,13 @@ export function Home({
                           )}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-pixel text-xs text-purple-700">{friend.name}</span>
+                          <span className="font-pixel text-xs text-amber-800">{friend.name}</span>
                           <span className="font-pixel text-[8px] text-gray-400">VIEW BIO</span>
                         </div>
                       </div>
                       <button
                         onClick={() => handleStartChat(friend)}
-                        className="p-2 pixel-border-sm bg-purple-500 text-white hover:bg-purple-400 transition-all"
+                        className="p-2 pixel-border-sm bg-amber-600 text-white hover:bg-amber-500 transition-all"
                         title="Start Chat"
                       >
                         <span className="font-pixel text-[10px]">CHAT</span>
@@ -287,17 +294,17 @@ export function Home({
       {/* === FRIEND PROFILE MODAL === */}
       {selectedFriend && (
         <div className="fixed inset-0 bg-sky-950/85 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white border-4 border-black p-6 w-full max-w-xs flex flex-col gap-4 shadow-[8px_8px_0_0_#9333ea]">
+          <div className="bg-white border-4 border-black p-6 w-full max-w-xs flex flex-col gap-4 shadow-[8px_8px_0_0_#b45309]">
             <div className="flex justify-center -mt-12 bg-white p-1 pixel-border">
               <img src={selectedFriend.avatarUrl} className="w-24 h-24 bg-sky-50" />
             </div>
             
             <div className="text-center">
-              <h3 className="font-pixel text-purple-600 text-lg uppercase">{selectedFriend.name}</h3>
+              <h3 className="font-pixel text-amber-700 text-lg uppercase">{selectedFriend.name}</h3>
               <p className="font-pixel text-[8px] text-gray-400 mt-0.5 tracking-widest">FRIEND STATUS: ACTIVE</p>
             </div>
 
-            <div className="bg-purple-50 p-3 pixel-border-sm min-h-[60px]">
+            <div className="bg-amber-50 p-3 pixel-border-sm min-h-[60px]">
               <p className="font-pixel text-[10px] text-zinc-600 italic">
                 {selectedFriend.bio || "No bio description provided."}
               </p>
@@ -309,7 +316,7 @@ export function Home({
                    handleStartChat(selectedFriend);
                    setSelectedFriend(null);
                 }}
-                className="w-full bg-purple-600 text-white font-pixel text-xs p-3 pixel-border hover:bg-purple-500 transition-all active:translate-y-1"
+                className="w-full bg-amber-600 text-white font-pixel text-xs p-3 pixel-border hover:bg-amber-500 transition-all active:translate-y-1"
               >
                 START DIRECT CHAT
               </button>
